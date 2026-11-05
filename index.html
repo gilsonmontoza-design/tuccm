@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portal digital do Templo de Umbanda Caboclo Corre Morro - Axé, União e Fraternidade.">
+    <title id="page-title">Templo de Umbanda Corre Morro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        terreiro: { green: '#064e3b', lightgreen: '#047857', accent: '#10b981', gold: '#fbbf24', darkgold: '#d97706' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], title: ['Cinzel', 'serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #022c22 100%); min-height: 100vh; }
+        .gold-border { border: 2px solid #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
+        .mystic-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body id="body-theme" class="text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-terreiro-green/90 border-b border-terreiro-gold/40 text-white sticky top-0 z-50 backdrop-blur-md shadow-lg">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-terreiro-gold flex items-center justify-center text-terreiro-green font-bold shadow-md">
+                    <i class="fa-solid fa-leaf text-lg"></i>
+                </div>
+                <div>
+                    <h1 id="header-site-name" class="font-title font-bold text-lg md:text-xl text-terreiro-gold tracking-wide">T.U. Caboclo Corre Morro</h1>
+                    <div class="flex items-center space-x-2">
+                        <p class="text-xs text-emerald-200">Axé, União e Fraternidade</p>
+                        <span class="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-full border border-emerald-500 shadow" id="global-followers">👥 0 Seguidores</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-3 mt-2 sm:mt-0">
+                <button onclick="goHome()" class="bg-emerald-800 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow transition flex items-center space-x-1 border border-emerald-600">
+                    <i class="fa-solid fa-house"></i><span class="hidden sm:inline">Início / Corrente</span>
+                </button>
+                <button onclick="openAdminLogin()" class="text-terreiro-gold hover:text-white transition p-2" title="Acesso Admin">
+                    <i class="fa-solid fa-lock text-lg"></i>
+                </button>
+                <button onclick="followTerreiro()" class="bg-terreiro-gold hover:bg-yellow-400 text-terreiro-green px-3 py-1.5 rounded-full text-xs font-bold shadow transition flex items-center space-x-1 border border-yellow-500">
+                    <i class="fa-solid fa-heart text-sm"></i><span class="hidden sm:inline">Seguir</span>
+                </button>
+                <button onclick="shareOnWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow transition flex items-center space-x-1.5 border border-emerald-400">
+                    <i class="fa-brands fa-whatsapp text-sm"></i><span class="hidden sm:inline">Convidar</span>
+                </button>
+                <div id="user-badge" class="hidden items-center space-x-2 bg-terreiro-lightgreen px-3 py-1.5 rounded-full border border-terreiro-gold/50 text-sm">
+                    <span id="badge-icon">🌿</span>
+                    <span class="font-semibold text-terreiro-gold hidden sm:inline" id="badge-name"></span>
+                    <button onclick="logout()" class="ml-2 text-xs text-red-200 hover:text-white transition" title="Trocar de Perfil">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+
+        <!-- TELA 1: ESCOLHA DE PERFIL -->
+        <div id="screen-welcome" class="mystic-card rounded-2xl p-6 md:p-10 shadow-2xl gold-border my-auto">
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <span class="text-4xl">🪶🌿✨</span>
+                <h2 class="font-title text-2xl md:text-3xl font-bold text-terreiro-green mt-3">Salve a Corrente do Terreiro!</h2>
+                <p class="text-gray-600 mt-2 text-sm md:text-base">
+                    Bem-vindo(a) ao portal digital do <strong class="text-terreiro-green" id="welcome-site-name">Templo de Umbanda Corre Morro</strong>. Clique em qualquer nome da corrente abaixo ou entre como Visitante!
+                </p>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-terreiro-darkgold mb-3 flex items-center">
+                        <i class="fa-solid fa-star text-terreiro-gold mr-1.5"></i> Pais de Santo / Dirigentes
+                    </h3>
+                    <div id="dirigentes-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-terreiro-darkgold mb-3 flex items-center">
+                        <i class="fa-solid fa-drum text-terreiro-gold mr-1.5"></i> Curimbeiros / Ogãs
+                    </h3>
+                    <div id="ogas-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-terreiro-darkgold mb-3 flex items-center">
+                        <i class="fa-solid fa-hands-praying text-terreiro-gold mr-1.5"></i> Filhos(as) de Fé
+                    </h3>
+                    <div id="filhos-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+                <div class="pt-4 border-t border-emerald-100 mt-4">
+                    <button onclick="selectProfile('Visitante Amigo', 'Assistência', '🕊️', '')" class="w-full text-left p-4 rounded-xl border-2 border-dashed border-emerald-300 hover:border-terreiro-gold bg-white hover:bg-emerald-50 transition flex items-center justify-between group">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl p-2 bg-emerald-50 rounded-lg shadow-sm">🕊️</span>
+                            <div>
+                                <span class="font-bold text-terreiro-green block">Sou Visitante / Assistência</span>
+                                <span class="text-xs text-gray-500">Entrar para curtir, comentar e acessar o blog</span>
+                            </div>
+                        </div>
+                        <span class="bg-terreiro-green text-white px-4 py-2 rounded-lg font-bold text-xs">Entrar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA 2: PERFIL INDIVIDUAL DO MEMBRO -->
+        <div id="screen-profile" class="hidden max-w-2xl mx-auto w-full">
+            <button onclick="goHome()" class="mb-4 bg-white/80 hover:bg-white text-terreiro-green px-3 py-1.5 rounded-lg font-bold text-xs shadow transition flex items-center space-x-1 w-max">
+                <i class="fa-solid fa-arrow-left"></i><span>Voltar para a Corrente</span>
+            </button>
+            
+            <div class="mystic-card rounded-3xl shadow-2xl gold-border overflow-hidden">
+                <div class="h-32 bg-gradient-to-r from-emerald-900 to-terreiro-green relative">
+                    <div class="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
+                        <div id="profile-photo-container" class="w-32 h-32 rounded-full border-4 border-terreiro-gold bg-white shadow-xl flex items-center justify-center text-6xl overflow-hidden">
+                            <!-- Foto ou Emoji cai aqui -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-20 pb-8 px-6 text-center">
+                    <h2 id="profile-name" class="font-title text-2xl font-bold text-terreiro-green">Nome</h2>
+                    <span id="profile-role" class="inline-block mt-1 bg-emerald-100 text-terreiro-green font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">Cargo</span>
+                    
+                    <div class="mt-6 bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 relative">
+                        <i class="fa-solid fa-quote-left absolute top-3 left-3 text-emerald-200 text-2xl"></i>
+                        <p id="profile-message" class="text-sm text-gray-700 italic relative z-10 px-4"></p>
+                    </div>
+
+                    <div id="profile-bio-container" class="mt-6 text-left hidden">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-terreiro-darkgold mb-2 border-b pb-1">Sobre</h3>
+                        <p id="profile-bio" class="text-sm text-gray-600 whitespace-pre-wrap"></p>
+                    </div>
+
+                    <div class="mt-8 flex justify-center space-x-3">
+                        <button id="profile-enter-btn" class="bg-terreiro-green hover:bg-emerald-800 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105 flex items-center space-x-2">
+                            <i class="fa-solid fa-door-open"></i><span>Entrar no Terreiro</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA 3: HUB PRINCIPAL -->
+        <div id="screen-hub" class="hidden space-y-6">
+            <div class="mystic-card rounded-2xl p-6 shadow-xl gold-border text-center relative overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <button onclick="goHome()" class="bg-emerald-100 hover:bg-emerald-200 text-terreiro-green px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1 shadow transition">
+                        <i class="fa-solid fa-arrow-left"></i><span>Início / Corrente</span>
+                    </button>
+                    <h3 class="font-title text-xl md:text-2xl font-bold text-terreiro-green" id="welcome-title">Salve, irmão(ã)!</h3>
+                    <div></div>
+                </div>
+                
+                <div class="flex flex-wrap justify-center gap-2 mt-3" id="tabs-container">
+                    <button onclick="switchTab('forum')" id="tab-forum-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-terreiro-green text-white shadow-md flex items-center space-x-1.5"><i class="fa-solid fa-users text-terreiro-gold"></i><span>Comunidade</span></button>
+                    <button onclick="switchTab('blog')" id="tab-blog-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-book-open text-terreiro-gold"></i><span>Blog</span></button>
+                    <button onclick="switchTab('wall')" id="tab-wall-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-comments text-terreiro-gold"></i><span>Mural</span></button>
+                    <button onclick="switchTab('store')" id="tab-store-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-shop text-terreiro-gold"></i><span>Lojinha</span></button>
+                    <button onclick="switchTab('calendar')" id="tab-calendar-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-calendar-days text-terreiro-gold"></i><span>Calendário</span></button>
+                    <button onclick="switchTab('guides')" id="tab-guides-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-hands-holding-circle text-terreiro-gold"></i><span>Guias</span></button>
+                    <button onclick="switchTab('pontos')" id="tab-pontos-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-music text-terreiro-gold"></i><span>Pontos</span></button>
+                    <button onclick="switchTab('gallery')" id="tab-gallery-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-images text-terreiro-gold"></i><span>Galeria</span></button>
+                    <button onclick="switchTab('faq')" id="tab-faq-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-circle-question text-terreiro-gold"></i><span>Dúvidas</span></button>
+                    <button onclick="switchTab('game')" id="tab-game-btn" class="nav-tab px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-terreiro-green border border-emerald-200 hover:bg-emerald-50 shadow-sm flex items-center space-x-1.5"><i class="fa-solid fa-route text-terreiro-gold"></i><span>Trilha</span></button>
+                    <button onclick="switchTab('admin')" id="tab-admin-btn" class="nav-tab hidden px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-red-800 text-white shadow-md items-center space-x-1.5"><i class="fa-solid fa-gear text-terreiro-gold"></i><span>Admin</span></button>
+                </div>
+            </div>
+
+            <!-- SEÇÕES -->
+            <div id="section-forum" class="tab-content mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border">
+                <h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-users text-terreiro-gold mr-2"></i> Comunidade & Discussões</h3>
+                <div class="bg-emerald-50/70 p-5 rounded-xl border border-emerald-200 mb-8">
+                    <form onsubmit="createForumTopic(event)" class="space-y-3">
+                        <input type="text" id="forum-title-input" placeholder="Título do tópico ou pergunta..." class="w-full p-3 rounded-lg border border-emerald-300 text-sm font-bold bg-white" required>
+                        <textarea id="forum-desc-input" rows="3" placeholder="Escreva sua dúvida ou reflexão..." class="w-full p-3 rounded-lg border border-emerald-300 text-sm bg-white" required></textarea>
+                        <div class="flex justify-end"><button type="submit" class="bg-terreiro-green text-white px-6 py-2 rounded-lg font-bold text-sm">Publicar Tópico</button></div>
+                    </form>
+                </div>
+                <div id="forum-list" class="space-y-6"></div>
+            </div>
+
+            <div id="section-blog" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border"><h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-book-open text-terreiro-gold mr-2"></i> Blog & Artigos</h3><div id="blog-list" class="space-y-6"></div></div>
+
+            <div id="section-wall" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border">
+                <h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-comments text-terreiro-gold mr-2"></i> Mural Fraterno</h3>
+                <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 mb-6">
+                    <form onsubmit="sendWallMessage(event)" class="space-y-3">
+                        <textarea id="msg-input" rows="2" placeholder="Deixe seu axé..." class="w-full p-3 rounded-lg border border-emerald-300 text-sm bg-white" required></textarea>
+                        <div class="flex justify-end"><button type="submit" class="bg-terreiro-green text-white px-5 py-2 rounded-lg font-bold text-sm">Enviar Recado</button></div>
+                    </form>
+                </div>
+                <div id="messages-list" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+            </div>
+            
+            <div id="section-store" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border"><h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-shop text-terreiro-gold mr-2"></i> Lojinha</h3><div id="store-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div></div>
+            
+            <div id="section-calendar" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border">
+                <h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-calendar-days text-terreiro-gold mr-2"></i> Calendário de Giras</h3>
+                <div class="bg-white rounded-xl border border-emerald-100 shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr class="bg-emerald-50 text-terreiro-green"><th class="p-3 border-b font-bold text-sm">Data</th><th class="p-3 border-b font-bold text-sm">Trabalho Espiritual</th></tr></thead>
+                        <tbody id="calendar-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="section-guides" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border"><h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-hands-holding-circle text-terreiro-gold mr-2"></i> Guias</h3><div id="guides-list" class="space-y-3"></div></div>
+            
+            <div id="section-gallery" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border"><h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-images text-terreiro-gold mr-2"></i> Galeria</h3><div id="gallery-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div></div>
+            
+            <div id="section-pontos" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border"><h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-music text-terreiro-gold mr-2"></i> Pontos Cantados</h3><div id="pontos-list" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div></div>
+
+            <div id="section-faq" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border"><h3 class="font-title text-xl font-bold text-terreiro-green flex items-center mb-6"><i class="fa-solid fa-circle-question text-terreiro-gold mr-2"></i> Dúvidas</h3><div id="faq-list" class="space-y-3"></div></div>
+
+            <div id="section-game" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl gold-border">
+                <div class="flex justify-between items-center mb-6"><h3 class="font-title text-xl font-bold text-terreiro-green flex items-center"><i class="fa-solid fa-route text-terreiro-gold mr-2"></i> Trilha Mística</h3><span id="game-step-badge" class="bg-amber-100 text-terreiro-darkgold px-3 py-1 rounded-full text-xs font-bold"></span></div>
+                <div id="game-container" class="bg-white rounded-xl p-6 border border-emerald-100 shadow-inner"></div>
+            </div>
+
+            <!-- SEÇÃO ADMIN -->
+            <div id="section-admin" class="tab-content hidden mystic-card rounded-2xl p-6 md:p-8 shadow-xl border-2 border-red-800 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-title text-xl font-bold text-red-800 flex items-center"><i class="fa-solid fa-gear text-terreiro-gold mr-2"></i> Painel Admin - Controle Total</h3>
+                    <button onclick="goHome()" class="bg-red-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">🏠 Voltar à Corrente</button>
+                </div>
+
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">⚙️ Configurações Gerais</h4>
+                    <form onsubmit="saveSiteConfig(event)" class="space-y-2">
+                        <input type="text" id="admin-sitename-input" value="Templo de Umbanda Corre Morro" class="w-full p-2 rounded border text-sm" required>
+                        <select id="admin-theme-select" class="w-full p-2 rounded border text-sm">
+                            <option value="linear-gradient(135deg, #022c22 0%, #064e3b 50%, #022c22 100%)">Verde Floresta (Clássico)</option>
+                            <option value="linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)">Azul Noite</option>
+                        </select>
+                        <button type="submit" class="bg-red-800 text-white px-4 py-2 rounded-lg font-bold text-xs">Salvar</button>
+                    </form>
+                </div>
+
+                <!-- Membros (Com Edição, Foto e Biografia) -->
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">👥 Membros da Corrente</h4>
+                    <form id="form-members" onsubmit="submitMember(event)" class="space-y-2 bg-white p-3 rounded border border-red-100">
+                        <input type="hidden" id="member-id" value="">
+                        <input type="text" id="member-name" placeholder="Nome" class="w-full p-2 rounded border text-sm" required>
+                        <select id="member-category" class="w-full p-2 rounded border text-sm" required>
+                            <option value="Dirigente">Dirigente / Pai de Santo</option>
+                            <option value="Ogã">Ogã / Curimbeiro</option>
+                            <option value="Filho de Fé">Filho(a) de Fé</option>
+                        </select>
+                        <input type="text" id="member-emoji" placeholder="Emoji (ex: 👑)" class="w-full p-2 rounded border text-sm" required>
+                        <input type="url" id="member-photo" placeholder="URL da Foto (Opcional)" class="w-full p-2 rounded border text-sm">
+                        <input type="text" id="member-message" placeholder="Mensagem curta (Frase)" class="w-full p-2 rounded border text-sm" required>
+                        <textarea id="member-bio" rows="2" placeholder="Biografia / História (Opcional)" class="w-full p-2 rounded border text-sm"></textarea>
+                        <div class="flex space-x-2 pt-1">
+                            <button type="submit" class="bg-red-800 text-white px-4 py-2 rounded-lg font-bold text-xs flex-grow">Salvar Membro</button>
+                            <button type="button" onclick="resetMemberForm()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold text-xs hidden" id="btn-cancel-member">Cancelar</button>
+                        </div>
+                    </form>
+                    <div id="admin-members-list" class="space-y-1 max-h-48 overflow-y-auto pt-2"></div>
+                </div>
+
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">📝 Blog & Artigos</h4>
+                    <form onsubmit="postItem(event, blogCollection, ['title', 'category', 'emoji', 'content'])" class="space-y-2">
+                        <input type="text" name="title" placeholder="Título" class="w-full p-2 rounded border text-sm" required>
+                        <div class="flex space-x-2">
+                            <input type="text" name="category" placeholder="Categoria" class="w-1/2 p-2 rounded border text-sm" required>
+                            <input type="text" name="emoji" placeholder="Emoji" class="w-1/2 p-2 rounded border text-sm" required>
+                        </div>
+                        <textarea name="content" rows="3" placeholder="Conteúdo..." class="w-full p-2 rounded border text-sm" required></textarea>
+                        <button type="submit" class="bg-red-800 text-white px-4 py-2 rounded-lg font-bold text-xs">Publicar Artigo</button>
+                    </form>
+                    <div id="admin-blog-list" class="space-y-1 max-h-36 overflow-y-auto pt-2"></div>
+                </div>
+
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">🛍️ Lojinha</h4>
+                    <form onsubmit="postItem(event, storeCollection, ['name', 'price', 'emoji'])" class="space-y-2">
+                        <input type="text" name="name" placeholder="Produto" class="w-full p-2 rounded border text-sm" required>
+                        <input type="text" name="price" placeholder="Preço" class="w-full p-2 rounded border text-sm" required>
+                        <input type="text" name="emoji" placeholder="Emoji" class="w-full p-2 rounded border text-sm" required>
+                        <button type="submit" class="bg-red-800 text-white px-4 py-2 rounded-lg font-bold text-xs">Adicionar Produto</button>
+                    </form>
+                    <div id="admin-store-list" class="space-y-1 max-h-36 overflow-y-auto pt-2"></div>
+                </div>
+
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">📅 Calendário de Giras</h4>
+                    <form onsubmit="postItem(event, calendarCollection, ['date', 'title'])" class="space-y-2">
+                        <input type="text" name="date" placeholder="Data" class="w-full p-2 rounded border text-sm" required>
+                        <input type="text" name="title" placeholder="Trabalho" class="w-full p-2 rounded border text-sm" required>
+                        <button type="submit" class="bg-red-800 text-white px-4 py-2 rounded-lg font-bold text-xs">Adicionar Gira</button>
+                    </form>
+                    <div id="admin-calendar-list" class="space-y-1 max-h-36 overflow-y-auto pt-2"></div>
+                </div>
+
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">🪶 Guias</h4>
+                    <form onsubmit="postItem(event, guidesCollection, ['name', 'desc', 'emoji'])" class="space-y-2">
+                        <input type="text" name="name" placeholder="Nome da Guia" class="w-full p-2 rounded border text-sm" required>
+                        <input type="text" name="desc" placeholder="Descrição" class="w-full p-2 rounded border text-sm" required>
+                        <input type="text" name="emoji" placeholder="Emoji" class="w-full p-2 rounded border text-sm" required>
+                        <button type="submit" class="bg-red-800 text-white px-4 py-2 rounded-lg font-bold text-xs">Adicionar Guia</button>
+                    </form>
+                    <div id="admin-guides-list" class="space-y-1 max-h-36 overflow-y-auto pt-2"></div>
+                </div>
+
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">🎵 Pontos Cantados</h4>
+                    <form onsubmit="postItem(event, pontosCollection, ['title', 'line', 'emoji'])" class="space-y-2">
+                        <input type="text" name="title" placeholder="Título do Ponto" class="w-full p-2 rounded border text-sm" required>
+                        <textarea name="line" rows="2" placeholder="Letra do ponto..." class="w-full p-2 rounded border text-sm" required></textarea>
+                        <input type="text" name="emoji" placeholder="Emoji" class="w-full p-2 rounded border text-sm" required>
+                        <button type="submit" class="bg-red-800 text-white px-4 py-2 rounded-lg font-bold text-xs">Adicionar Ponto</button>
+                    </form>
+                    <div id="admin-pontos-list" class="space-y-1 max-h-36 overflow-y-auto pt-2"></div>
+                </div>
+
+                <div class="bg-red-50 p-5 rounded-xl border border-red-200 space-y-3">
+                    <h4 class="font-bold text-red-900">🖼️ Galeria</h4>
+                    <form onsubmit="postItem(event, galleryCollection, ['title', 'imageUrl', 'desc'])" class="space-y-2">
+                        <input type="text" name="title" placeholder="Título" class="w-full p-2 rounded border text-sm" required>
+                        <input type="url" name="imageUrl" placeholder="URL da imagem" class="w-full p-2 rounded border text-sm" required>
+                        <input type="text" name="desc" placeholder="Descrição" class="w-full p-2 rounded border text-sm">
+                        <button type="submit" class="bg-red-800 text
